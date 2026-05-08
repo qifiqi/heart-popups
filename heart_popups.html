@@ -448,8 +448,8 @@
 </head>
 <body>
   <main class="stage" id="stage">
-    <section class="hud">
-      <button class="hud-toggle" id="hud-toggle" type="button" aria-expanded="true">缩小</button>
+    <section class="hud is-collapsed">
+      <button class="hud-toggle" id="hud-toggle" type="button" aria-expanded="false">展开</button>
       <div class="hud-copy">
         <p class="eyebrow">Warm Popups</p>
         <h1 class="title">爱心会先长出来，再把温柔炸满整屏</h1>
@@ -913,7 +913,8 @@
     });
 
     try {
-      if (window.localStorage.getItem(HUD_STORAGE_KEY) === "1") {
+      const storedHudState = window.localStorage.getItem(HUD_STORAGE_KEY);
+      if (storedHudState === null || storedHudState === "1") {
         hud.classList.add("is-collapsed");
       }
     } catch (error) {
