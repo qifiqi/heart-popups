@@ -541,7 +541,6 @@
     const statusText = document.getElementById("status");
     const counter = document.getElementById("counter");
     const replayButton = document.getElementById("replay");
-    const HUD_STORAGE_KEY = "heart-popups-hud-collapsed";
 
     function schedule(fn, delay) {
       const timer = window.setTimeout(fn, delay);
@@ -897,11 +896,6 @@
     hudToggle.addEventListener("click", () => {
       hud.classList.toggle("is-collapsed");
       syncHudToggle();
-      try {
-        window.localStorage.setItem(HUD_STORAGE_KEY, hud.classList.contains("is-collapsed") ? "1" : "0");
-      } catch (error) {
-        console.debug("Skipping HUD preference persistence.", error);
-      }
     });
 
     replayButton.addEventListener("click", runShow);
@@ -911,15 +905,6 @@
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(runShow, 220);
     });
-
-    try {
-      const storedHudState = window.localStorage.getItem(HUD_STORAGE_KEY);
-      if (storedHudState === null || storedHudState === "1") {
-        hud.classList.add("is-collapsed");
-      }
-    } catch (error) {
-      console.debug("Skipping HUD preference restore.", error);
-    }
 
     syncHudToggle();
     runShow();
