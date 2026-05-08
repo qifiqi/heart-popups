@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>爱心弹窗烟花</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-1: #150e1d;
+      --bg-2: #301726;
+      --bg-3: #6f1d33;
+      --ink: #fff7fb;
+      --soft-ink: rgba(255, 247, 251, 0.78);
+      --glass: rgba(255, 245, 249, 0.14);
+      --glass-strong: rgba(255, 237, 244, 0.22);
+      --line: rgba(255, 255, 255, 0.24);
+      --accent: #ff6b95;
+      --accent-2: #ffc0d4;
+      --shadow: rgba(17, 7, 17, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 20%, rgba(255, 152, 191, 0.24), transparent 24%),
+        radial-gradient(circle at 82% 22%, rgba(255, 214, 165, 0.18), transparent 20%),
+        radial-gradient(circle at 50% 85%, rgba(255, 97, 139, 0.18), transparent 24%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 48%, var(--bg-3));
+      font-family: "Noto Serif SC", serif;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    body::before {
+      background:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.09) 0 0.08rem, transparent 0.09rem) 0 0 / 1.6rem 1.6rem;
+      opacity: 0.3;
+      mix-blend-mode: screen;
+    }
+
+    body::after {
+      background:
+        radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.15), transparent 42%),
+        radial-gradient(circle at 50% 52%, rgba(255, 126, 164, 0.13), transparent 32%);
+      filter: blur(24px);
+      opacity: 0.85;
+    }
+
+    body.perf-lite::after {
+      filter: blur(16px);
+      opacity: 0.72;
+    }
+
+    body.perf-low::after {
+      filter: blur(10px);
+      opacity: 0.54;
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      isolation: isolate;
+      overflow: hidden;
+    }
+
+    .hud {
+      position: fixed;
+      top: 1.2rem;
+      left: 1.2rem;
+      z-index: 9000;
+      width: min(26rem, calc(100vw - 2.4rem));
+      padding: 1rem 1rem 1rem 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 1.3rem;
+      background: linear-gradient(145deg, rgba(37, 16, 31, 0.72), rgba(95, 28, 46, 0.46));
+      box-shadow: 0 1.2rem 3.2rem rgba(14, 6, 15, 0.34);
+      backdrop-filter: blur(22px);
+      transition:
+        width 260ms ease,
+        padding 260ms ease,
+        border-radius 260ms ease,
+        background 260ms ease,
+        box-shadow 260ms ease;
+    }
+
+    .hud.is-collapsed {
+      width: min(16.5rem, calc(100vw - 2.4rem));
+      padding: 0.9rem 3.5rem 0.9rem 1rem;
+      border-radius: 1rem;
+      background: linear-gradient(145deg, rgba(37, 16, 31, 0.82), rgba(77, 27, 56, 0.58));
+      box-shadow: 0 0.85rem 2rem rgba(14, 6, 15, 0.28);
+    }
+
+    body.perf-lite .hud,
+    body.perf-lite .legend {
+      backdrop-filter: blur(10px);
+    }
+
+    body.perf-low .hud,
+    body.perf-low .legend {
+      backdrop-filter: none;
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--accent-2);
+      font: 600 0.78rem/1.2 "Noto Serif SC", serif;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 0.35rem 0 0;
+      font: 400 clamp(1.9rem, 4vw, 3rem)/0.94 "ZCOOL XiaoWei", serif;
+      transition: font-size 220ms ease, line-height 220ms ease, margin 220ms ease;
+    }
+
+    .hud.is-collapsed .title {
+      margin-top: 0.24rem;
+      font-size: clamp(1.08rem, 2.6vw, 1.4rem);
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      margin: 0.65rem 0 0;
+      color: var(--soft-ink);
+      font-size: 0.98rem;
+      line-height: 1.75;
+      transition: opacity 220ms ease, max-height 220ms ease, margin 220ms ease;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      margin-top: 0.95rem;
+      flex-wrap: wrap;
+      transition: opacity 220ms ease, max-height 220ms ease, margin 220ms ease;
+      max-height: 8rem;
+    }
+
+    .hud-copy {
+      overflow: hidden;
+    }
+
+    .hud.is-collapsed .subtitle,
+    .hud.is-collapsed .toolbar {
+      opacity: 0;
+      max-height: 0;
+      margin-top: 0;
+      pointer-events: none;
+    }
+
+    .status-pill {
+      padding: 0.55rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      color: rgba(255, 248, 251, 0.92);
+      font-size: 0.88rem;
+      letter-spacing: 0.03em;
+    }
+
+    .replay {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.76rem 1.15rem;
+      color: #2b0914;
+      background: linear-gradient(120deg, #ffe0eb, #ff88af);
+      font: 700 0.92rem/1 "Noto Serif SC", serif;
+      cursor: pointer;
+      box-shadow: 0 1rem 1.8rem rgba(255, 120, 165, 0.34);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+    }
+
+    .replay:hover {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 1.15rem 2rem rgba(255, 120, 165, 0.42);
+    }
+
+    .hud-toggle {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.5rem;
+      height: 2.2rem;
+      padding: 0 0.78rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      color: rgba(255, 246, 250, 0.94);
+      background: rgba(255, 255, 255, 0.08);
+      font: 600 0.82rem/1 "Noto Serif SC", serif;
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    .hud-toggle:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.13);
+      border-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .legend {
+      position: fixed;
+      right: 1.2rem;
+      bottom: 1rem;
+      z-index: 9000;
+      padding: 0.7rem 0.95rem;
+      border-radius: 999px;
+      background: rgba(37, 16, 31, 0.48);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: rgba(255, 247, 251, 0.78);
+      font-size: 0.82rem;
+      letter-spacing: 0.04em;
+      backdrop-filter: blur(16px);
+    }
+
+    .popup {
+      --x: 0px;
+      --y: 0px;
+      --scale: 0.4;
+      --rotate: 0deg;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: var(--w);
+      height: var(--h, 8.6rem);
+      padding: 0.65rem 0.7rem 0.8rem;
+      border-radius: 1.1rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 239, 245, 0.09)),
+        linear-gradient(135deg, rgba(84, 29, 52, 0.88), rgba(255, 138, 178, 0.18));
+      box-shadow: 0 1rem 2.3rem var(--shadow);
+      opacity: 0;
+      transform: translate3d(var(--x), var(--y), 0) scale(var(--scale)) rotate(var(--rotate));
+      transition:
+        transform 900ms cubic-bezier(0.19, 1, 0.22, 1),
+        opacity 340ms ease,
+        box-shadow 220ms ease;
+      overflow: hidden;
+      user-select: none;
+      pointer-events: none;
+      will-change: transform, opacity;
+      contain: layout paint style;
+    }
+
+    body.perf-lite .popup {
+      box-shadow: 0 0.8rem 1.65rem rgba(17, 7, 17, 0.28);
+    }
+
+    body.perf-low .popup {
+      box-shadow: 0 0.55rem 1.05rem rgba(17, 7, 17, 0.22);
+      border-color: rgba(255, 255, 255, 0.14);
+    }
+
+    .popup::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(140deg, rgba(255, 255, 255, 0.16), transparent 35%),
+        radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.2), transparent 22%);
+      pointer-events: none;
+    }
+
+    body.perf-low .popup::before {
+      opacity: 0.52;
+    }
+
+    .popup.is-visible {
+      opacity: 1;
+    }
+
+    .popup.is-heart {
+      box-shadow:
+        0 1rem 2.3rem rgba(17, 7, 17, 0.34),
+        0 0 1.3rem rgba(255, 112, 156, 0.32);
+    }
+
+    body.perf-lite .popup.is-heart,
+    body.perf-low .popup.is-heart {
+      box-shadow: 0 0.85rem 1.55rem rgba(17, 7, 17, 0.26);
+    }
+
+    .popup.is-exploded {
+      box-shadow:
+        0 1.2rem 2.8rem rgba(17, 7, 17, 0.42),
+        0 0 1.1rem rgba(255, 219, 230, 0.16);
+    }
+
+    body.perf-lite .popup.is-exploded,
+    body.perf-low .popup.is-exploded {
+      box-shadow: 0 0.9rem 1.7rem rgba(17, 7, 17, 0.24);
+    }
+
+    .popup.floating {
+      animation: hover-drift 5.8s ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+
+    body.perf-low .popup.floating {
+      animation: none;
+    }
+
+    .popup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      position: relative;
+      z-index: 1;
+      padding-bottom: 0.5rem;
+    }
+
+    .window-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.32rem;
+    }
+
+    .window-dots span {
+      width: 0.58rem;
+      height: 0.58rem;
+      border-radius: 999px;
+      background: rgba(255, 236, 242, 0.9);
+      box-shadow: 0 0 0.55rem rgba(255, 255, 255, 0.22);
+    }
+
+    .window-tag {
+      color: rgba(255, 247, 251, 0.72);
+      font-size: 0.76rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .popup-body {
+      position: relative;
+      z-index: 1;
+      margin-top: 0.25rem;
+      padding: 0.65rem 0.2rem 0.18rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .popup-message {
+      margin: 0;
+      color: #fffafc;
+      font: 600 1rem/1.68 "Noto Serif SC", serif;
+      text-wrap: balance;
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+    }
+
+    .popup-sign {
+      margin: 0.65rem 0 0;
+      color: rgba(255, 226, 236, 0.72);
+      font: 400 0.8rem/1 "Noto Serif SC", serif;
+      letter-spacing: 0.08em;
+    }
+
+    .spark {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 8500;
+      color: rgba(255, 226, 236, 0.92);
+      font: 400 1rem/1 "ZCOOL XiaoWei", serif;
+      text-shadow: 0 0 0.9rem rgba(255, 138, 178, 0.48);
+      pointer-events: none;
+      animation: spark-fly 1.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    body.perf-low .spark {
+      text-shadow: none;
+    }
+
+    @keyframes hover-drift {
+      0%,
+      100% {
+        translate: 0 0;
+      }
+      50% {
+        translate: 0 -0.45rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .popup,
+      .spark,
+      .replay {
+        transition-duration: 0ms !important;
+        animation-duration: 0ms !important;
+      }
+    }
+
+    @keyframes spark-fly {
+      0% {
+        transform: translate3d(0, 0, 0) scale(0.55);
+        opacity: 0;
+      }
+      12% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate3d(var(--dx), var(--dy), 0) scale(1.3);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        top: 0.9rem;
+        left: 0.9rem;
+        width: calc(100vw - 1.8rem);
+      }
+
+      .legend {
+        right: 0.8rem;
+        bottom: 0.8rem;
+        max-width: calc(100vw - 1.6rem);
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" id="stage">
+    <section class="hud">
+      <button class="hud-toggle" id="hud-toggle" type="button" aria-expanded="true">缩小</button>
+      <div class="hud-copy">
+        <p class="eyebrow">Warm Popups</p>
+        <h1 class="title">爱心会先长出来，再把温柔炸满整屏</h1>
+        <p class="subtitle">
+          这是一份可以直接打开运行的单文件小动画。每个小弹窗都是一句暖心话，先拼成爱心，再像烟花一样散到整个屏幕。
+        </p>
+        <div class="toolbar">
+          <span class="status-pill" id="status">正在酝酿心意...</span>
+          <button class="replay" id="replay" type="button">再炸一次</button>
+        </div>
+      </div>
+    </section>
+    <div class="legend" id="counter">准备中</div>
+  </main>
+
+  <script>
+    const warmMessages = [
+      "你已经很棒了，不用等谁批准。",
+      "今天的你，也值得被认真喜欢。",
+      "慢一点没关系，你在向前走。",
+      "愿你抬头有光，低头有花。",
+      "你不是麻烦，你是被珍惜的人。",
+      "累了就歇一下，宇宙不会催你。",
+      "你的存在，本身就很温柔。",
+      "请相信，春天正在路上。",
+      "所有小小努力，都会有回音。",
+      "你值得被坚定地选择。",
+      "愿你永远有重新出发的勇气。",
+      "别怕，今天也有人偷偷偏爱你。",
+      "就算慢半拍，也依然闪闪发光。",
+      "你不是孤单一人，我在这边。",
+      "每一次坚持，都算数。",
+      "愿你心里住着一片柔软海洋。",
+      "你可以不完美，但依然可爱。",
+      "请把今天，也过成礼物。",
+      "风会记得你认真生活的样子。",
+      "你眼里的光，真的很好看。",
+      "愿你所念，终有回声。",
+      "有些答案，会在安静里长出来。",
+      "你配得上所有明亮的词语。",
+      "请先照顾好自己，再去照亮别人。",
+      "你已经做得比想象中更好了。",
+      "愿你被世界温柔接住。",
+      "偶尔脆弱，也是一种勇敢。",
+      "别急，你的好消息正在派送。",
+      "把心放软一点，日子会更甜。",
+      "你值得拥有松弛又自在的幸福。",
+      "今天的云，也在替你说晚安。",
+      "总会有人奔向你，带着真心。",
+      "请继续发光，不必借谁的灯。",
+      "愿你一想起自己，就充满底气。",
+      "生活会绕个弯，把惊喜送给你。",
+      "你很珍贵，不需要证明。",
+      "请相信自己配得上好结局。",
+      "你所有的认真，都很动人。",
+      "愿你把平凡日子过成星光。",
+      "你的温柔，会被世界看见。",
+      "别担心，花会沿路盛开。",
+      "你熬过的夜，终会换来晨光。",
+      "请保留那一点天真和热爱。",
+      "你值得一切柔软的拥抱。",
+      "即使下雨，心里也能种太阳。",
+      "愿你每天都有一点点好运气。",
+      "往前走吧，路会慢慢亮起来。",
+      "有我替你收集今天的温柔。",
+      "你值得所有不慌不忙的爱。",
+      "每个认真生活的人，都在发亮。",
+      "愿你的心事，最后都变成甜的。",
+      "请把自己放在重要的位置。",
+      "你不是一个人，你一直被惦记。",
+      "愿你所到之处，都有花开。",
+      "今天也请对自己温柔一点。",
+      "你会被懂得，也会被偏爱。",
+      "那些沉默的努力，都在发芽。",
+      "好事会来，而且会来的刚刚好。",
+      "记得开心，因为你真的很可爱。"
+    ];
+
+    const state = {
+      timers: [],
+      popups: [],
+      cycle: 0,
+      profile: null
+    };
+
+    const stage = document.getElementById("stage");
+    const hud = document.querySelector(".hud");
+    const hudToggle = document.getElementById("hud-toggle");
+    const statusText = document.getElementById("status");
+    const counter = document.getElementById("counter");
+    const replayButton = document.getElementById("replay");
+    const HUD_STORAGE_KEY = "heart-popups-hud-collapsed";
+
+    function schedule(fn, delay) {
+      const timer = window.setTimeout(fn, delay);
+      state.timers.push(timer);
+      return timer;
+    }
+
+    function clearScheduled() {
+      state.timers.forEach((timer) => window.clearTimeout(timer));
+      state.timers.length = 0;
+    }
+
+    function randomBetween(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function syncHudToggle() {
+      const collapsed = hud.classList.contains("is-collapsed");
+      hudToggle.textContent = collapsed ? "展开" : "缩小";
+      hudToggle.setAttribute("aria-expanded", String(!collapsed));
+      hudToggle.setAttribute("aria-label", collapsed ? "展开说明面板" : "缩小说明面板");
+    }
+
+    function shouldFloat() {
+      return Math.random() < state.profile.floatRatio;
+    }
+
+    function getPerformanceProfile() {
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const saveData = navigator.connection && navigator.connection.saveData;
+      const cores = navigator.hardwareConcurrency || 4;
+      const memory = navigator.deviceMemory || 4;
+      const isCompactViewport = window.innerWidth < 900 || window.innerHeight < 700;
+
+      if (reducedMotion || saveData || cores <= 2 || memory <= 2) {
+        return {
+          mode: "low",
+          label: "省电模式",
+          heartDivisor: 120000,
+          heartMin: 12,
+          heartMax: 18,
+          totalDivisor: 42000,
+          totalMin: 28,
+          totalMax: 42,
+          heartStep: 132,
+          explodeStep: 32,
+          extraStep: 56,
+          spawnDelay: 260,
+          heartSparkEvery: 0,
+          heartSparkCount: 0,
+          centerSparkCount: 8,
+          widthMin: 150,
+          widthMax: 196,
+          popupHeight: 126,
+          floatRatio: 0
+        };
+      }
+
+      if (isCompactViewport || cores <= 4 || memory <= 4) {
+        return {
+          mode: "lite",
+          label: "流畅模式",
+          heartDivisor: 88000,
+          heartMin: 16,
+          heartMax: 26,
+          totalDivisor: 30000,
+          totalMin: 40,
+          totalMax: 68,
+          heartStep: 112,
+          explodeStep: 24,
+          extraStep: 44,
+          spawnDelay: 240,
+          heartSparkEvery: 8,
+          heartSparkCount: 3,
+          centerSparkCount: 14,
+          widthMin: 158,
+          widthMax: 214,
+          popupHeight: 132,
+          floatRatio: 0.42
+        };
+      }
+
+      return {
+        mode: "high",
+        label: "标准模式",
+        heartDivisor: 70000,
+        heartMin: 20,
+        heartMax: 34,
+        totalDivisor: 24500,
+        totalMin: 54,
+        totalMax: 92,
+        heartStep: 96,
+        explodeStep: 18,
+        extraStep: 38,
+        spawnDelay: 220,
+        heartSparkEvery: 6,
+        heartSparkCount: 4,
+        centerSparkCount: 18,
+        widthMin: 168,
+        widthMax: window.innerWidth < 760 ? 212 : 234,
+        popupHeight: window.innerWidth < 760 ? 132 : 138,
+        floatRatio: 0.72
+      };
+    }
+
+    function applyPerformanceProfile() {
+      state.profile = getPerformanceProfile();
+      document.body.classList.remove("perf-high", "perf-lite", "perf-low");
+      document.body.classList.add(`perf-${state.profile.mode}`);
+    }
+
+    function heartPoint(angle) {
+      const x = 16 * Math.pow(Math.sin(angle), 3);
+      const y = 13 * Math.cos(angle) - 5 * Math.cos(2 * angle) - 2 * Math.cos(3 * angle) - Math.cos(4 * angle);
+      return { x, y };
+    }
+
+    function heartTargets(count) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const centerX = width / 2;
+      const centerY = height * 0.5;
+      const scaleFactor = state.profile.mode === "low" ? 0.0165 : width < 760 ? 0.018 : 0.021;
+      const scale = Math.min(width, height) * scaleFactor;
+      const points = [];
+
+      for (let index = 0; index < count; index += 1) {
+        const angle = (Math.PI * 2 * index) / count;
+        const point = heartPoint(angle);
+        const jitter = width < 760 ? 3 : 5;
+        points.push({
+          x: centerX + point.x * scale + randomBetween(-jitter, jitter),
+          y: centerY - point.y * scale + randomBetween(-jitter, jitter)
+        });
+      }
+
+      return points;
+    }
+
+    function safePosition(boxWidth, boxHeight) {
+      const margin = window.innerWidth < 760 ? 10 : 16;
+      return {
+        x: randomBetween(margin, window.innerWidth - boxWidth - margin),
+        y: randomBetween(margin, window.innerHeight - boxHeight - margin)
+      };
+    }
+
+    function centerPosition(boxWidth, boxHeight) {
+      return {
+        x: window.innerWidth / 2 - boxWidth / 2,
+        y: window.innerHeight / 2 - boxHeight / 2
+      };
+    }
+
+    function spawnSparkBurst(centerX, centerY, count) {
+      if (count <= 0) {
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      for (let index = 0; index < count; index += 1) {
+        const spark = document.createElement("span");
+        spark.className = "spark";
+        spark.textContent = index % 3 === 0 ? "❤" : index % 2 === 0 ? "✦" : "♡";
+        spark.style.left = `${centerX}px`;
+        spark.style.top = `${centerY}px`;
+        const distance = state.profile.mode === "low" ? 110 : state.profile.mode === "lite" ? 150 : 180;
+        spark.style.setProperty("--dx", `${randomBetween(-distance, distance)}px`);
+        spark.style.setProperty("--dy", `${randomBetween(-distance, distance)}px`);
+        spark.style.fontSize = `${randomBetween(0.85, 1.45)}rem`;
+        fragment.appendChild(spark);
+        spark.addEventListener("animationend", () => spark.remove(), { once: true });
+      }
+
+      stage.appendChild(fragment);
+    }
+
+    function destroyAllPopups() {
+      clearScheduled();
+      stage.querySelectorAll(".popup, .spark").forEach((node) => node.remove());
+      state.popups.length = 0;
+    }
+
+    function applyMotion(record, targetX, targetY, scale, rotate) {
+      record.x = targetX;
+      record.y = targetY;
+      record.element.style.setProperty("--x", `${Math.round(targetX)}px`);
+      record.element.style.setProperty("--y", `${Math.round(targetY)}px`);
+      record.element.style.setProperty("--scale", `${scale}`);
+      record.element.style.setProperty("--rotate", `${rotate}deg`);
+    }
+
+    function makePopup(message, index, startAtCenter = true) {
+      const popup = document.createElement("article");
+      const width = Math.round(randomBetween(state.profile.widthMin, state.profile.widthMax));
+      const height = state.profile.popupHeight;
+      popup.className = "popup";
+      popup.style.setProperty("--w", `${width}px`);
+      popup.style.setProperty("--h", `${height}px`);
+      popup.style.setProperty("--delay", `${randomBetween(0, 2.8)}s`);
+      popup.innerHTML = `
+        <header class="popup-header">
+          <div class="window-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="window-tag">Warm Note ${String(index + 1).padStart(2, "0")}</div>
+        </header>
+        <div class="popup-body">
+          <p class="popup-message">${message}</p>
+          <p class="popup-sign">给今天的你</p>
+        </div>
+      `;
+      stage.appendChild(popup);
+
+      const start = startAtCenter ? centerPosition(width, height) : safePosition(width, height);
+      popup.style.setProperty("--x", `${Math.round(start.x)}px`);
+      popup.style.setProperty("--y", `${Math.round(start.y)}px`);
+
+      const record = {
+        element: popup,
+        width,
+        height,
+        x: start.x,
+        y: start.y
+      };
+
+      requestAnimationFrame(() => popup.classList.add("is-visible"));
+      state.popups.push(record);
+      return record;
+    }
+
+    function buildHeartPhase(cycle) {
+      const area = window.innerWidth * window.innerHeight;
+      const heartCount = clamp(
+        Math.round(area / state.profile.heartDivisor),
+        state.profile.heartMin,
+        state.profile.heartMax
+      );
+      const targets = heartTargets(heartCount);
+
+      statusText.textContent = "正在拼爱心...";
+      counter.textContent = `爱心弹窗就位中 · ${heartCount} 句 · ${state.profile.label}`;
+
+      targets.forEach((target, index) => {
+        schedule(() => {
+          if (cycle !== state.cycle) {
+            return;
+          }
+
+          const message = warmMessages[index % warmMessages.length];
+          const record = makePopup(message, index);
+          record.element.classList.add("is-heart");
+          applyMotion(
+            record,
+            target.x - record.width / 2,
+            target.y - record.height / 2,
+            1,
+            randomBetween(-7, 7)
+          );
+
+          if (state.profile.heartSparkEvery > 0 && index % state.profile.heartSparkEvery === 0) {
+            spawnSparkBurst(target.x, target.y, state.profile.heartSparkCount);
+          }
+
+          if (index === targets.length - 1) {
+            schedule(() => explodePhase(cycle), 1450);
+          }
+        }, index * state.profile.heartStep);
+      });
+    }
+
+    function explodePhase(cycle) {
+      if (cycle !== state.cycle) {
+        return;
+      }
+
+      statusText.textContent = "炸开啦，整屏都是偏爱...";
+      const area = window.innerWidth * window.innerHeight;
+      const totalCount = clamp(
+        Math.round(area / state.profile.totalDivisor),
+        state.profile.totalMin,
+        state.profile.totalMax
+      );
+      counter.textContent = `满屏暖心话 · ${totalCount} 个弹窗 · ${state.profile.label}`;
+
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+      spawnSparkBurst(centerX, centerY, state.profile.centerSparkCount);
+
+      state.popups.forEach((record, index) => {
+        schedule(() => {
+          if (cycle !== state.cycle) {
+            return;
+          }
+
+          const target = safePosition(record.width, record.height);
+          record.element.classList.remove("is-heart");
+          record.element.classList.add("is-exploded");
+          if (shouldFloat()) {
+            record.element.classList.add("floating");
+          }
+          applyMotion(record, target.x, target.y, randomBetween(0.95, 1.08), randomBetween(-18, 18));
+        }, index * state.profile.explodeStep);
+      });
+
+      const extrasNeeded = Math.max(0, totalCount - state.popups.length);
+      for (let index = 0; index < extrasNeeded; index += 1) {
+        schedule(() => {
+          if (cycle !== state.cycle) {
+            return;
+          }
+
+          const messageIndex = (state.popups.length + index) % warmMessages.length;
+          const record = makePopup(warmMessages[messageIndex], state.popups.length + index);
+          record.element.classList.add("is-exploded");
+          const target = safePosition(record.width, record.height);
+          applyMotion(record, record.x, record.y, 0.22, randomBetween(-24, 24));
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              if (shouldFloat()) {
+                record.element.classList.add("floating");
+              }
+              applyMotion(record, target.x, target.y, randomBetween(0.88, 1.05), randomBetween(-24, 24));
+            });
+          });
+        }, state.profile.spawnDelay + index * state.profile.extraStep);
+      }
+
+      schedule(() => {
+        if (cycle === state.cycle) {
+          statusText.textContent = "爱意已铺满屏幕";
+        }
+      }, Math.min(2200 + extrasNeeded * state.profile.extraStep, 5200));
+    }
+
+    function runShow() {
+      state.cycle += 1;
+      applyPerformanceProfile();
+      destroyAllPopups();
+      statusText.textContent = "正在酝酿心意...";
+      counter.textContent = `准备中 · ${state.profile.label}`;
+      buildHeartPhase(state.cycle);
+    }
+
+    hudToggle.addEventListener("click", () => {
+      hud.classList.toggle("is-collapsed");
+      syncHudToggle();
+      try {
+        window.localStorage.setItem(HUD_STORAGE_KEY, hud.classList.contains("is-collapsed") ? "1" : "0");
+      } catch (error) {
+        console.debug("Skipping HUD preference persistence.", error);
+      }
+    });
+
+    replayButton.addEventListener("click", runShow);
+
+    let resizeTimer = 0;
+    window.addEventListener("resize", () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(runShow, 220);
+    });
+
+    try {
+      if (window.localStorage.getItem(HUD_STORAGE_KEY) === "1") {
+        hud.classList.add("is-collapsed");
+      }
+    } catch (error) {
+      console.debug("Skipping HUD preference restore.", error);
+    }
+
+    syncHudToggle();
+    runShow();
+  </script>
+</body>
+</html>
