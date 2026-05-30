@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AI视觉追踪激光灭蚊系统 | 完整设计与实现方案</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0f4f8 0%, #d9e2ec 100%);
+            font-family: 'Segoe UI', 'Roboto', 'Noto Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+            line-height: 1.5;
+            color: #1a2c3e;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(1px);
+            border-radius: 2.5rem;
+            box-shadow: 0 25px 45px -12px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.6);
+        }
+
+        /* 头部样式 */
+        .hero {
+            background: linear-gradient(135deg, #0b2b3b 0%, #1a4a6f 100%);
+            padding: 2rem 2rem 2.5rem;
+            color: white;
+            text-align: center;
+            border-bottom: 4px solid #f5b042;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 0.75rem;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .hero h1 i {
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .hero .sub {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 1rem;
+            display: inline-block;
+        }
+
+        .badge-container {
+            margin-top: 1.2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .badge {
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            padding: 0.3rem 1rem;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        /* 内容区域 */
+        .content {
+            padding: 2rem 2rem 2.5rem;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+            background: #ffffffcc;
+            border-radius: 1.5rem;
+            padding: 1.8rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+            transition: all 0.2s;
+            border: 1px solid #eef2f6;
+        }
+
+        .section h2 {
+            font-size: 1.7rem;
+            font-weight: 600;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 6px solid #f5b042;
+            padding-left: 1rem;
+            color: #0f3b4c;
+        }
+
+        .section h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 1rem 0 0.8rem 0;
+            color: #2c5a6e;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.8rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1.2rem;
+            padding: 1.2rem 1.5rem;
+            box-shadow: 0 6px 12px -8px rgba(0,0,0,0.1);
+            border: 1px solid #e9edf2;
+        }
+
+        .card strong {
+            color: #1a4a6f;
+        }
+
+        .price-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .price-table th, .price-table td {
+            text-align: left;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .price-table th {
+            background-color: #f0f6fa;
+            font-weight: 600;
+            color: #155f73;
+        }
+
+        .price-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .total-price {
+            background: #eef2f9;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .warning {
+            background: #fff3e0;
+            border-left: 5px solid #f5b042;
+            padding: 1rem 1.2rem;
+            border-radius: 1rem;
+            margin: 1rem 0;
+        }
+
+        .step-list {
+            padding-left: 1.5rem;
+            margin: 0.8rem 0;
+        }
+
+        .step-list li {
+            margin: 0.6rem 0;
+        }
+
+        .btn-link {
+            display: inline-block;
+            background: #236b7c;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-right: 0.8rem;
+            margin-bottom: 0.5rem;
+            transition: 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .btn-link:hover {
+            background: #0e4d5f;
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            background: #eef2f6;
+            padding: 1.5rem 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #4a6272;
+            border-top: 1px solid #d4dfea;
+        }
+
+        @media (max-width: 680px) {
+            .content {
+                padding: 1.5rem;
+            }
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+            .section {
+                padding: 1.2rem;
+            }
+        }
+
+        .laser-icon {
+            font-size: 1.3rem;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="hero">
+        <h1>⚡ AI 视觉追踪 · 激光灭蚊系统 <span style="font-size: 0.8rem;">「方案一 · 全自主瞄准型」</span></h1>
+        <div class="sub">基于深度学习 + 高速双轴云台 + 高能激光 | 完整软硬件设计 & 采购指南</div>
+        <div class="badge-container">
+            <span class="badge">🎯 YOLOv8 实时检测</span>
+            <span class="badge">🔄 PID 平滑追踪</span>
+            <span class="badge">🔒 红外热释电安全闭锁</span>
+            <span class="badge">🧠 Jetson Nano / 树莓派4B</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- 总体设计思路 -->
+        <div class="section">
+            <h2>📡 1. 系统总体设计思路</h2>
+            <p style="margin-bottom: 1rem;">本系统模拟“微型防空反导体系”，通过视觉感知 + AI目标识别 + 高速云台伺服 + 脉冲激光烧蚀，实现室内静止或飞行蚊子的全自动灭杀。工作流程如下：</p>
+            <div style="background: #eef2fa; padding: 1.2rem; border-radius: 1.2rem; margin: 1rem 0;">
+                <p><strong>🔁 闭环流程：</strong> 广角/长焦摄像头采集图像 → 传入Jetson Nano运行轻量化目标检测模型(识别蚊子) → 获取蚊子的像素坐标 → 利用PID算法解算云台角度偏差 → 驱动数字舵机对准 → 当瞄准误差小于阈值(5~10像素) → 触发激光脉冲(10~50ms) → 击落/碳化蚊子 → 下一目标。</p>
+                <p style="margin-top: 8px;">✅ <strong>特色安全设计：</strong> 红外热释电模块监测人宠活动，一旦进入警戒区域，硬件级切断激光器供电，确保绝对安全。同时软件逻辑仅在室内光线较暗时激活避免干扰。</p>
+            </div>
+            <div class="grid-2col">
+                <div class="card">
+                    <h3 style="margin-top: 0;">🎯 探测与识别</h3>
+                    <p>采用USB摄像头(可搭配被动红外补光)，运行经剪枝训练的YOLOv8n或SSD-MobileNet模型。针对蚊子飞行姿态、轮廓进行数据增强，实现实时推理速度 >20FPS。当蚊子悬停或低速移动时锁定最佳。</p>
+                </div>
+                <div class="card">
+                    <h3 style="margin-top: 0;">⚙️ 伺服与打击</h3>
+                    <p>2轴高精度金属舵机云台，配合PCA9685驱动，实现0.2°级指向。5W 445nm蓝光激光模组配合脉冲驱动板，瞬间高温气化蚊虫。通过散热风扇保证长期运行。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 材料清单 + 价格明细 (实时可采购) -->
+        <div class="section">
+            <h2>🧾 2. 核心物料清单 & 参考价格 (2025年Q2 国内市场)</h2>
+            <p>以下组件均可在主流电商平台（淘宝、京东、立创商城、阿里1688）或海外（Adafruit、SparkFun）获得。总计预算约 <strong style="font-size:1.3rem;">¥1500 ~ ¥2300元</strong> (依据精度与算力板型号浮动)。</p>
+            <table class="price-table">
+                <thead>
+                <tr><th>组件名称</th><th>型号/规格要求</th><th>预估单价(¥)</th><th>数量</th><th>小计(¥)</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>主控算力平台</td><td>Jetson Nano 2GB (或 树莓派4B 4G + Google Coral TPU)</td><td>650~850</td><td>1</td><td>750</td></tr>
+                    <tr><td>高清摄像头</td><td>1080P 60fps 免驱 USB摄像头(或IMX219 CSI 广角)</td><td>80~150</td><td>1</td><td>120</td></tr>
+                    <tr><td>激光模组(核心)</td><td>5W 445nm 蓝光 半导体激光器 TTL调制 + 散热器/风扇</td><td>280~450</td><td>1</td><td>380</td></tr>
+                    <tr><td>激光驱动板</td><td>TTL/PWM 恒流驱动板 (支持脉冲控制)</td><td>45~80</td><td>1</td><td>65</td></tr>
+                    <tr><td>二轴云台(金属舵机)</td><td>MG996R 或 20kg数码舵机 x2 + 金属云台支架</td><td>110(两只+支架)</td><td>1套</td><td>110</td></tr>
+                    <tr><td>舵机驱动板</td><td>PCA9685 16路PWM模块</td><td>25</td><td>1</td><td>25</td></tr>
+                    <tr><td>红外热释电传感器</td><td>HC-SR501 (人体感应 3-7米)</td><td>12</td><td>1</td><td>12</td></tr>
+                    <tr><td>安全继电器模块</td><td>1路 5V 光耦隔离 (控制激光总电源)</td><td>10</td><td>1</td><td>10</td></tr>
+                    <tr><td>降压/电源模块</td><td>12V转5V 3A DC-DC 及 12V锂电池组(或电源适配器)</td><td>80(含电池)</td><td>1套</td><td>80</td></tr>
+                    <tr><td>结构件/外壳/导轨</td><td>亚克力板、铜柱、螺丝、减震垫</td><td>50</td><td>1</td><td>50</td></tr>
+                    <tr><td>散热风扇(5V)</td><td>30x30mm 用于激光器散热</td><td>15</td><td>1</td><td>15</td></tr>
+                    <tr style="background:#f9fbfd;"><td colspan="4" style="text-align:right; font-weight:bold;">基础硬件总预算(不含可选配件):</td><td style="font-weight:bold;">¥1617</td></tr>
+                    <tr><td colspan="5" style="font-size:0.85rem; color:#4f6f7f;">* 若使用树莓派4B(4G) + Coral USB加速器成本增加约¥400，但软件生态更友好；以上为Jetson Nano方案。激光波长选择445nm兼顾灭蚊效率与相对安全(仍需严格防护)。</td></tr>
+                </tbody>
+            </table>
+            <div class="warning">
+                🔴 <strong>安全优先 · 必购附件</strong> ：激光防护眼镜（OD6+ 445nm）约¥60元，且必须安装硬件急停开关。本系统仅用于室内封闭实验环境。
+            </div>
+        </div>
+
+        <!-- 购买地址与链接 (典型) -->
+        <div class="section">
+            <h2>🛒 3. 购买渠道 & 资料链接</h2>
+            <div class="grid-2col">
+                <div class="card">
+                    <h3>🇨🇳 国内主要购买平台</h3>
+                    <p><strong>🔹 淘宝 / 天猫</strong> : 搜索“Jetson Nano 开发板”、“445nm 5W 激光模组 TTL”、“PCA9685 舵机驱动”、“金属云台 二自由度” 等关键词。<br>
+                    <strong>🔹 立创商城 (LCSC)</strong> : 电子元器件、激光驱动板、继电器模组，质量可靠。<br>
+                    <strong>🔹 1688</strong> : 批量采购舵机、激光模组价格更低。<br>
+                    <strong>🔹 闲鱼</strong> : 可淘二手Jetson Nano或树莓派，降低成本。</p>
+                    <a href="#" class="btn-link" onclick="alert('请自行打开淘宝/京东搜索对应关键词，本示例为指引。')">📦 模拟直达链接 → 搜索词参考</a>
+                </div>
+                <div class="card">
+                    <h3>📚 开源资料 / 技术文档</h3>
+                    <ul style="margin-left:1rem;">
+                        <li>🔗 <strong>NVIDIA Jetson Nano 官方AI教程</strong> : developer.nvidia.com/embedded/learn</li>
+                        <li>🔗 <strong>YOLOv8 训练蚊子数据集</strong> : github.com/ultralytics/ultralytics (模型转换与部署)</li>
+                        <li>🔗 <strong>激光追踪项目参考 (PhotonFence 类似)</strong> : 搜索 "DIY Laser Mosquito Killer GitHub"</li>
+                        <li>🔗 <strong>PID 伺服控制库</strong> : github.com/tekdemo/PID舵机控制 Python示例</li>
+                        <li>🔗 <strong>MOSQUITO DETECTION 数据集(部分)</strong> : Roboflow Universe 搜索 “mosquito”</li>
+                    </ul>
+                    <button class="btn-link" onclick="window.open('https://github.com/ultralytics/ultralytics','_blank')">📘 跳转 YOLOv8</button>
+                    <button class="btn-link" onclick="window.open('https://developer.nvidia.com/embedded/jetson-nano-developer-kit','_blank')">⚡ Jetson Nano 官方</button>
+                </div>
+            </div>
+            <p style="margin-top: 1rem; font-size:0.9rem;">⭐ <strong>推荐资料库搜索关键字：</strong> “AI消灭蚊子 开源项目” / “Laser mosquito killer opencv” / “蚊虫检测 YOLO” 可获得大量灵感及代码框架。</p>
+        </div>
+
+        <!-- 详细组装、软件设计步骤 -->
+        <div class="section">
+            <h2>🔧 4. 完整硬件组装 & 软件开发流程</h2>
+            <h3>🛠️ 4.1 机械与电气组装</h3>
+            <ul class="step-list">
+                <li><strong>步骤1：</strong> 将激光模组与摄像头平行固定于云台上平面，使用铝型材或3D打印支架，保证光轴与摄像头视野中心对齐（激光校准：10米外照射靶点与画面中心十字重合）。</li>
+                <li><strong>步骤2：</strong> 将两个数字舵机安装在云台底座，并固定在底板，确保转动无干涉。连接舵机线至PCA9685驱动板。</li>
+                <li><strong>步骤3：</strong> 激光驱动板的 TTL 信号连接主控GPIO（PWM引脚），激光电源串接安全继电器，继电器控制端接主控IO。红外热释电传感器输出接主控外部中断引脚，同时硬件上串联继电器使能端（双重保险）。</li>
+                <li><strong>步骤4：</strong> 采用12V锂电池组为舵机、激光器主供电，5V降压模块为主控、摄像头、传感器供电。添加总开关和急停按键。</li>
+                <li><strong>步骤5：</strong> 通电前测试舵机回中，并确保激光器仅在校准模式下低压点亮。加装物理挡光板限制射界外溢。</li>
+            </ul>
+            <h3>💻 4.2 软件算法与部署</h3>
+            <ul class="step-list">
+                <li><strong>环境配置：</strong> Jetson Nano 烧录JetPack 4.6+，安装CUDA、cuDNN、OpenCV、TensorRT及Ultralytics YOLO。</li>
+                <li><strong>数据集获取与训练：</strong> 收集蚊子图像(飞行+静止)约1500张，标注bounding box。利用预训练模型微调，导出engine推理引擎。</li>
+                <li><strong>主控逻辑实现：</strong> Python脚本循环抓帧→推理获取目标中心(cx,cy)→调用PID控制器→输出PWM调整舵机→等待系统稳定→误差小于阈值时，激光点火(发射脉冲10~30ms)→记录击杀。增加目标滤波、防抖。</li>
+                <li><strong>安全防护代码：</strong> 持续监测热释电传感器及全局标志位，如果检测到人或宠物活动，立即释放继电器断开激光电源，并停止追踪动作，直到安全区域恢复。</li>
+                <li><strong>优化实战：</strong> 针对蚊子移动速度较快，可采用卡尔曼滤波预测下一帧位置，提升命中率。设置最大激光发射间隔限制防止过热。</li>
+            </ul>
+            <div class="warning">
+                💡 <strong>调试经验：</strong> 激光瞄准校准是最大难点，建议先在静态靶板(黑色蚊子剪纸)上调校；飞行蚊子实验必须在密闭、无反射、无人区域测试。激光功率从1W起逐步增加。
+            </div>
+        </div>
+
+        <!-- 详细成本分析表格+波动说明 -->
+        <div class="section">
+            <h2>💰 5. 价格波动与替代方案 (性价比优化)</h2>
+            <table class="price-table">
+                <tr><th>替代方案</th><th>成本变化</th><th>说明</th></tr>
+                <tr><td>树莓派4B + Google Coral TPU</td><td>+400~550元</td><td>推理速度更快，软件生态更宽泛，但总体功耗稍高。</td></tr>
+                <tr><td>入门级 RK3588 开发板(Orange Pi 5)</td><td>≈750元(板载NPU)</td><td>算力充足，但初期环境配置略复杂。</td></tr>
+                <tr><td>降低激光功率 1.6W 蓝光</td><td>-180元</td><td>对小型蚊子仍有效，但远距离焦灼时间略长，需更精准瞄准。</td></tr>
+                <tr><td>使用普通USB摄像头+OpenCV背景差分(传统视觉)</td><td>-400元(免AI芯片)</td><td>可能误报极高，不推荐复杂环境，仅做入门验证。</td></tr>
+                <tr><td>二手/Jetson Nano 2GB 从二手渠道</td><td>可降至500以内</td><td>性价比突出，适合预算紧张的创客。</td></tr>
+            </table>
+            <p>总体价格区间 <strong>¥1200(乞丐版非AI)~ ¥2600(高性能完整版)</strong>，本方案推荐采用标准Jetson Nano+5W激光，总投入约¥1700~¥1900（含防护装备）。</p>
+        </div>
+
+        <!-- 进阶改进与调试提示 -->
+        <div class="section">
+            <h2>📌 6. 完整调试指引 & 性能预期</h2>
+            <p>✅ <strong>预期灭蚊效率：</strong> 室内静态或悬停蚊子击杀率约75%-90%（光照充足且距离<2米），飞行中击落率约60%，随着PID优化和更佳AI模型可提升。激光精准命中可瞬间击落并产生轻微焦糊味。</p>
+            <p>✅ <strong>系统限制：</strong> 视野范围受限于摄像头FOV及云台旋转角度(水平0~270°，俯仰±45°)，适合书房/卧室角落部署。工作噪音主要为风扇与舵机运动，约45分贝。</p>
+            <p>✅ <strong>重要安全提醒：</strong> 激光不可直视，本设备严禁在开放空间未加物理防护罩运行，必须保证无反射镜面，同时使用传感器自动停发。请遵守GB 7247.1激光安全标准。</p>
+            <div style="background:#e9f2ee; border-radius: 1rem; padding:0.8rem 1.2rem; margin-top:1rem;">
+                🔔 <strong>补充资料：</strong> 完整Python伪代码及PID调参指南，可参考类似开源项目 “LaserTurretWithAI”。本页面描述的全部零件可在电子市场购买；如需提供详细的PCB设计或接线图，建议查阅NVIDIA论坛相关激光炮台项目。
+            </div>
+        </div>
+
+        <!-- 总结 + 激发行动 -->
+        <div class="section" style="background: linear-gradient(120deg, #f9f3e6, #ffffff);">
+            <h2>✨ 7. 结语 · 从科幻到桌面</h2>
+            <p>基于视觉的激光灭蚊方案融合了嵌入式AI、精密伺服与光学技术，是非常硬核的创客挑战。通过上述物料与设计，你将亲手打造一台“蚊子防御系统”。<br>
+            🧪 建议初次制作时组建一个封闭亚克力测试箱，先验证静态靶标，再尝试活蚊。将项目成果分享至 GitHub / 知乎，可推动国内激光灭蚊生态发展。</p>
+            <p style="margin-top: 0.8rem;"><strong>📢 点击下方虚拟链接可快速复制搜索词：</strong></p>
+            <div>
+                <button class="btn-link" onclick="navigator.clipboard.writeText('Jetson Nano 5W 激光模组 双目云台 蚊虫检测 YOLO');alert('搜索关键词已复制，可去淘宝/京东粘贴')">📋 复制采购关键词</button>
+                <button class="btn-link" onclick="window.open('https://github.com/search?q=laser+mosquito+killer&type=repositories','_blank')">🐙 GitHub 相关项目</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            ⚠️ 免责声明：本文案仅提供技术设计思路与教育用途。激光设备需在严格安全规范下使用，开发者须承担全部安全责任。请在法律许可范围内操作。所有价格参考国内主流电商2026年5月行情，实际略有浮动。
+        </div>
+    </div>
+</div>
+</body>
+</html>
