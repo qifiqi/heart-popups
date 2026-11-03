@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#000005">
+  <title>太阳系探索</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="scene" id="scene"></main>
+  <div class="label" id="label"></div>
+  <div class="panel" id="panel">
+    <h2 id="pName"></h2>
+    <div class="facts" id="facts"></div>
+    <p class="desc" id="desc"></p>
+    <button class="back" id="back">返回太阳系</button>
+  </div>
+  <p class="hint" id="hint">点击任意星球查看详情</p>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
