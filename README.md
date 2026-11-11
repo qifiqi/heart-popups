@@ -2,6 +2,10 @@
 
 一个带点浪漫感的小网页动画：暖心弹窗会先在屏幕中拼成爱心，然后再炸开成满屏漂浮的祝福语。
 
+## 桌面版
+
+网页动画之外，`desktop/` 还保留一份 PyQt5 桌面弹窗实现（爱心弹窗 + 网格/随机弹窗雨），运行方式见 [desktop/README.md](desktop/README.md)。
+
 在线预览：
 [GitHub Pages](https://qifiqi.github.io/heart-popups/)
 
